@@ -60,9 +60,11 @@ worm_data.stats <- worm_data %>%
     Up_95_CL = t.test(count, conf.level = 0.95)$conf.int[2]
   )
 
-kbl(worm_data.stats, caption = "Descriptive statistics for the glyphosate experiment data", 
-    booktabs = TRUE, digits = c(0, 0, 0, 2, 3, 3, 3, 3)) %>% 
-  kable_styling(latex_options = c("scale_down", "hold_position"), position = "center")
+kbl(worm_data.stats,
+  caption = "Descriptive statistics for the glyphosate experiment data",
+  booktabs = TRUE, digits = c(0, 0, 0, 2, 3, 3, 3, 3)) %>%
+kable_styling(latex_options = c("scale_down", "hold_position"),
+  position = "center")
 ```
 
 In order to better visualize the data, we can use a stripchart with the groups in the $x$-axis and the data points from each replicate on the $y$-axis.
@@ -89,7 +91,11 @@ Taken from UBCO BIOL 202 Lab Tutorials:
 The Levene's test checks the null hypothesis that the variances of the groups are equal. The test is conducted below:
 
 ```{r}
-leveneTest(count ~ treatment, data = worm_data)
+leveneTest(count ~ treatment, data = worm_data) %>%
+  tidy() %>%
+  kbl(caption = "Levene's Test",
+    booktabs = TRUE) %>%
+  kable_styling(position = "center")
 ```
 
 Since the P-value for this test is greater than $\alpha = 0.05$ ($0.452 >> 0.05$), there is no evidence against the null hypothesis of equal variance.
@@ -100,7 +106,11 @@ Here is the proper ANOVA table for the experimental data:
 
 ```{r}
 worm_data.lm <- lm(count ~ treatment, data = worm_data)
-anova(worm_data.lm)
+anova(worm_data.lm) %>%
+  tidy() %>%
+  kbl(caption = "ANOVA table for the glyphosate experiment data",
+    booktabs = TRUE) %>%
+  kable_styling(position = "center")
 ```
 
 Finally, here is the calculation for the $R^2$ value of our results.
