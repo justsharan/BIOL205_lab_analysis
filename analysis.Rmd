@@ -1,0 +1,112 @@
+---
+title: "Statistical analysis for BIOL 205 glyphosate experiment"
+author: "Sharan & Arsenia"
+output: html_document
+---
+
+This is just the long version of the statistical analysis we did for our experiment. We only showed the most relevant bits of code in the presentation for the sake of brevity, but being transparent about our analysis methods is a core component of reproducible research.
+
+```{r, include=FALSE}
+library(tidyverse)
+library(naniar)
+library(knitr)
+library(car)
+library(broom)
+library(kableExtra)
+```
+
+## Importing and tidying data
+
+```{r, message=FALSE}
+worm_data <- read_csv("exp_data.csv")
+```
+
+First, we'll rename the treatment groups to be more descriptive.
+
+```{r, message=FALSE}
+treatments <- c(
+  "Control 1",
+  "Control 2",
+  "0.02% glyphosate",
+  "0.01% glyphosate"
+)
+
+worm_data$treatment <- as.factor(worm_data$treatment)
+levels(worm_data$treatment) <- treatments
+worm_data$treatment <- ordered(worm_data$treatment, levels = treatments)
+```
+
+## Hypothesis statements
+
+The null hypothesis of the ANOVA test is that the population means $\mu_i$ are same for all groups (controls and treatments).
+
+$H_0$: Mean worm survival is equal among all groups ($\mu_1$ = $\mu_2$ = $\mu_3$ = $\mu_4$).  
+$H_A$: At least one group's mean is different from the others.
+
+## Data visualization
+
+Here's a statistical summary of the data obtained from our experiment:
+
+```{r}
+worm_data.stats <- worm_data %>%
+  group_by(treatment) %>%
+  summarize(
+    Count = n() - naniar::n_miss(count),
+    Count_NA = naniar::n_miss(count),
+    Mean = mean(count, na.rm = TRUE),
+    SD = sd(count, na.rm = TRUE),
+    SEM = SD/sqrt(Count),
+    Low_95_CL = t.test(count, conf.level = 0.95)$conf.int[1],
+    Up_95_CL = t.test(count, conf.level = 0.95)$conf.int[2]
+  )
+
+kbl(worm_data.stats, caption = "Descriptive statistics for the glyphosate experiment data", 
+    booktabs = TRUE, digits = c(0, 0, 0, 2, 3, 3, 3, 3)) %>% 
+  kable_styling(latex_options = c("scale_down", "hold_position"), position = "center")
+```
+
+In order to better visualize the data, we can use a stripchart with the groups in the $x$-axis and the data points from each replicate on the $y$-axis.
+
+```{r, fig.align="center"}
+worm_data %>%
+  ggplot(aes(x = treatment, y = count)) +
+  geom_jitter(colour = "darkgrey", size = 3, shape = 1, width = 0.1) +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.1) +
+  stat_summary(fun = mean, geom = "point",
+    colour = "black", size = 3) +
+  xlab("Experimental group") +
+  ylab("Number of remaining worms after one week") +
+  ggtitle("Surviving worm population by treatment group")
+```
+
+## Checking assumptions
+
+Taken from UBCO BIOL 202 Lab Tutorials:
+> * The measurements in every group represent a random sample from the corresponding population (NOTE: for an experimental study, the assumption is that subjects are randomly assigned to treatments)
+> * The response variable has a normal distribution in each population
+> * The variance of the response variable is the same in all populations (called the “homogeneity of variance” assumption)
+
+The Levene's test checks the null hypothesis that the variances of the groups are equal. The test is conducted below:
+
+```{r}
+leveneTest(count ~ treatment, data = worm_data)
+```
+
+Since the P-value for this test is greater than $\alpha = 0.05$ ($0.452 >> 0.05$), there is no evidence against the null hypothesis of equal variance.
+
+## Fixed-effects ANOVA
+
+Here is the proper ANOVA table for the experimental data:
+
+```{r}
+worm_data.lm <- lm(count ~ treatment, data = worm_data)
+anova(worm_data.lm)
+```
+
+Finally, here is the calculation for the $R^2$ value of our results.
+
+```{r}
+summary(worm_data.lm)$r.squared
+```
+
+> The number of surviving worms does not differ significantly among treatment groups (ANOVA; P-value = 0.731; R² = 0.14).
