@@ -83,10 +83,11 @@ worm_data %>%
 
 ## Checking assumptions
 
-Taken from UBCO BIOL 202 Lab Tutorials:
-> * The measurements in every group represent a random sample from the corresponding population (NOTE: for an experimental study, the assumption is that subjects are randomly assigned to treatments)
-> * The response variable has a normal distribution in each population
-> * The variance of the response variable is the same in all populations (called the “homogeneity of variance” assumption)
+According to the [UBCO BIOL 202 Lab Tutorials site](https://ubco-biology.github.io/BIOL202/do-the-anova.html#assump_anova), the assumptions for a fixed-effects ANOVA test are as follows:
+
+* The measurements in every group represent a random sample from the corresponding population (NOTE: for an experimental study, the assumption is that subjects are randomly assigned to treatments)
+* The response variable has a normal distribution in each population
+* The variance of the response variable is the same in all populations (called the “homogeneity of variance” assumption)
 
 The Levene's test checks the null hypothesis that the variances of the groups are equal. The test is conducted below:
 
@@ -98,7 +99,7 @@ leveneTest(count ~ treatment, data = worm_data) %>%
   kable_styling(position = "center")
 ```
 
-Since the P-value for this test is greater than $\alpha = 0.05$ ($0.452 >> 0.05$), there is no evidence against the null hypothesis of equal variance.
+> Since the P-value for this test is greater than $\alpha = 0.05$ ($0.452 \gg 0.05$), there is no evidence against the null hypothesis of equal variance.
 
 ## Fixed-effects ANOVA
 
